@@ -17,7 +17,13 @@ const getBaseUrlFromRequest = (request: Request) => {
 
 const getFromEmail = () => String(process.env.SENDGRID_FROM_EMAIL || "").trim();
 
-const getSignupNotifyEmail = () => normalizeEmail(process.env.SIGNUP_NOTIFY_EMAIL || "");
+const getDefaultNotifyEmail = () =>
+  normalizeEmail(
+    process.env.SIGNUP_NOTIFY_EMAIL ||
+      process.env.BILLING_NOTIFY_EMAIL ||
+      process.env.CONTACT_TO_EMAIL ||
+      "hello@fotoshoot.cloud",
+  );
 
 export async function sendSendgridMail({
   toEmail,
@@ -182,7 +188,7 @@ export async function sendFotoShootSignupNotificationEmail({
   userEmail: string;
   userName: string;
 }) {
-  const notifyEmail = getSignupNotifyEmail();
+  const notifyEmail = getDefaultNotifyEmail();
   if (!isValidEmail(notifyEmail)) {
     return { ok: false, reason: "invalid_notify_email" };
   }
@@ -206,6 +212,68 @@ export async function sendFotoShootSignupNotificationEmail({
       <p><strong>Name:</strong> ${escapeHtml(safeName)}</p>
       <p><strong>Email:</strong> ${escapeHtml(safeEmail)}</p>
       <p><strong>Signed up at:</strong> ${escapeHtml(signedUpAt)}</p>
+    `,
+  });
+}
+
+export async function sendFotoShootContactEmail({
+  name,
+  email,
+  subject,
+  message,
+}: {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+}) {
+  const notifyEmail = getDefaultNotifyEmail();
+  if (!isValidEmail(notifyEmail)) {
+    return { ok: false, reason: "invalid_notify_email" };
+  }
+
+  const safeName = String(name || "").trim() || "—";
+  const safeEmail = normalizeEmail(email);
+  const safeSubject = String(subject || "").trim() || "Contact form";
+  const safeMessage = String(message || "").trim();
+
+  return sendSendgridMail({
+    toEmail: notifyEmail,
+    subject: `FotoShoot contact: ${safeSubject}`,
+    replyTo: safeEmail,
+    textBody: [`Name: ${safeName}`, `Email: ${safeEmail}`, `Subject: ${safeSubject}`, "", safeMessage].join("\n"),
+    htmlBody: `
+      <p><strong>Name:</strong> ${escapeHtml(safeName)}</p>
+      <p><strong>Email:</strong> ${escapeHtml(safeEmail)}</p>
+      <p><strong>Subject:</strong> ${escapeHtml(safeSubject)}</p>
+      <p><strong>Message:</strong></p>
+      <p>${escapeHtml(safeMessage).replace(/\n/g, "<br />")}</p>
+    `,
+  });
+}
+
+export async function sendFotoShootBillingAdminEmail({
+  subject,
+  lines = [],
+}: {
+  subject: string;
+  lines?: string[];
+}) {
+  const notifyEmail = getDefaultNotifyEmail();
+  if (!isValidEmail(notifyEmail)) {
+    return { ok: false, reason: "invalid_notify_email" };
+  }
+
+  const timestamp = new Date().toISOString();
+  return sendSendgridMail({
+    toEmail: notifyEmail,
+    subject,
+    textBody: [...lines, `Time: ${timestamp}`].join("\n"),
+    htmlBody: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;color:#333;line-height:1.6;font-size:16px;">
+        ${lines.map((line) => `<p>${escapeHtml(line)}</p>`).join("")}
+        <p><strong>Time:</strong> ${escapeHtml(timestamp)}</p>
+      </div>
     `,
   });
 }
