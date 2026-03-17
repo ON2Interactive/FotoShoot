@@ -3,6 +3,23 @@ import type { GoogleUser } from "@/lib/auth/google";
 
 const DEFAULT_TRIAL_CREDITS = 20;
 
+export type AppUserRecord = {
+  id: string;
+  google_sub: string;
+  email: string;
+  first_name: string | null;
+  last_name: string | null;
+  avatar_url: string | null;
+  credits_balance: number;
+  trial_credits_remaining: number;
+  trial_claimed: boolean;
+  subscription_plan: string | null;
+  subscription_status: string | null;
+  stripe_customer_id: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 function splitName(fullName: string) {
   const trimmed = fullName.trim();
   if (!trimmed) {
@@ -89,4 +106,166 @@ export async function upsertUserFromGoogleProfile(profile: GoogleUser) {
     firstName,
     lastName,
   };
+}
+
+export async function getUserByGoogleSub(googleSub: string) {
+  const supabase = getSupabaseServerClient();
+  const { data, error } = await supabase.from("users").select("*").eq("google_sub", googleSub).maybeSingle<AppUserRecord>();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data;
+}
+
+export async function getUserByEmail(email: string) {
+  const supabase = getSupabaseServerClient();
+  const { data, error } = await supabase.from("users").select("*").eq("email", email.trim().toLowerCase()).maybeSingle<AppUserRecord>();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data;
+}
+
+export async function getUserByStripeCustomerId(customerId: string) {
+  const supabase = getSupabaseServerClient();
+  const { data, error } = await supabase.from("users").select("*").eq("stripe_customer_id", customerId).maybeSingle<AppUserRecord>();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data;
+}
+
+export async function updateUserStripeCustomerId(userId: string, stripeCustomerId: string) {
+  const supabase = getSupabaseServerClient();
+  const { error } = await supabase.from("users").update({ stripe_customer_id: stripeCustomerId }).eq("id", userId);
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
+export async function updateUserSubscriptionState(
+  userId: string,
+  values: {
+    subscription_plan?: string | null;
+    subscription_status?: string | null;
+    stripe_customer_id?: string | null;
+  },
+) {
+  const supabase = getSupabaseServerClient();
+  const { error } = await supabase.from("users").update(values).eq("id", userId);
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
+export async function addCreditsIfNotExists({
+  userId,
+  credits,
+  type,
+  reason,
+  stripeEventId,
+}: {
+  userId: string;
+  credits: number;
+  type: string;
+  reason: string;
+  stripeEventId: string;
+}) {
+  const supabase = getSupabaseServerClient();
+
+  const { data: existingLedger, error: existingError } = await supabase
+    .from("credit_ledger")
+    .select("id")
+    .eq("stripe_event_id", stripeEventId)
+    .maybeSingle();
+
+  if (existingError) {
+    throw new Error(existingError.message);
+  }
+
+  if (existingLedger) {
+    return false;
+  }
+
+  const { data: user, error: userError } = await supabase.from("users").select("credits_balance").eq("id", userId).single();
+  if (userError) {
+    throw new Error(userError.message);
+  }
+
+  const nextCredits = Number(user.credits_balance || 0) + credits;
+  const { error: updateError } = await supabase.from("users").update({ credits_balance: nextCredits }).eq("id", userId);
+  if (updateError) {
+    throw new Error(updateError.message);
+  }
+
+  const { error: ledgerError } = await supabase.from("credit_ledger").insert({
+    user_id: userId,
+    type,
+    credits,
+    reason,
+    stripe_event_id: stripeEventId,
+  });
+
+  if (ledgerError) {
+    throw new Error(ledgerError.message);
+  }
+
+  return true;
+}
+
+export async function consumeGenerationCredit({
+  userId,
+  reason,
+}: {
+  userId: string;
+  reason: string;
+}) {
+  const supabase = getSupabaseServerClient();
+
+  const { data: user, error: userError } = await supabase
+    .from("users")
+    .select("credits_balance, trial_credits_remaining")
+    .eq("id", userId)
+    .single();
+
+  if (userError) {
+    throw new Error(userError.message);
+  }
+
+  const currentBalance = Number(user.credits_balance || 0);
+  if (currentBalance <= 0) {
+    return { ok: false };
+  }
+
+  const nextTrialCredits = Math.max(0, Number(user.trial_credits_remaining || 0) - 1);
+  const { error: updateError } = await supabase
+    .from("users")
+    .update({
+      credits_balance: currentBalance - 1,
+      trial_credits_remaining: nextTrialCredits,
+    })
+    .eq("id", userId);
+
+  if (updateError) {
+    throw new Error(updateError.message);
+  }
+
+  const { error: ledgerError } = await supabase.from("credit_ledger").insert({
+    user_id: userId,
+    type: "generation_debit",
+    credits: -1,
+    reason,
+  });
+
+  if (ledgerError) {
+    throw new Error(ledgerError.message);
+  }
+
+  return { ok: true };
 }

@@ -12,6 +12,17 @@ type ExportPayload = {
   filename: string;
 };
 
+type AccountSummary = {
+  email: string;
+  name: string;
+  avatarUrl: string | null;
+  creditsBalance: number;
+  trialCreditsRemaining: number;
+  subscriptionPlan: string | null;
+  subscriptionStatus: string | null;
+  stripeCustomerId: string | null;
+};
+
 type UploadedImage = {
   id: string;
   name: string;
@@ -100,7 +111,20 @@ const studioQuickPresets = [
   },
 ];
 
-export default function DashboardShell() {
+export default function DashboardShell({
+  initialAccount = {
+    email: "",
+    name: "",
+    avatarUrl: null,
+    creditsBalance: 0,
+    trialCreditsRemaining: 0,
+    subscriptionPlan: null,
+    subscriptionStatus: null,
+    stripeCustomerId: null,
+  },
+}: {
+  initialAccount?: AccountSummary;
+}) {
   const [activeMobilePanel, setActiveMobilePanel] = useState<MobilePanel>("center");
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
   const [activeImageId, setActiveImageId] = useState<string | null>(null);
@@ -111,6 +135,9 @@ export default function DashboardShell() {
   const [warmth, setWarmth] = useState(100);
   const [sepia, setSepia] = useState(0);
   const [isExporting, setIsExporting] = useState(false);
+  const [account, setAccount] = useState<AccountSummary>(initialAccount);
+  const [settingsBusyAction, setSettingsBusyAction] = useState<string | null>(null);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const activeImageRef = useRef<HTMLImageElement>(null);
   const uploadedImagesRef = useRef<UploadedImage[]>([]);
@@ -129,6 +156,22 @@ export default function DashboardShell() {
   const activeImageFilter = `brightness(${brightness}%) saturate(${saturation}%) contrast(${contrast}%) sepia(${warmthSepia}%) hue-rotate(${warmthHue}deg) sepia(${sepia}%)`;
   const isPromptDisabled = !activeImage || activeImage.status === "processing" || prompt.trim().length === 0;
   const isProcessingModalOpen = activeImage?.status === "processing" || isExporting;
+  const hasGenerationCredits = account.creditsBalance > 0;
+  const generationLockReason = "No credits remaining. Top up or choose a plan to continue.";
+  const currentPlanLabel = account.subscriptionPlan
+    ? account.subscriptionPlan.replaceAll("_", " ").replace(/\b\w/g, (char) => char.toUpperCase())
+    : "Trial";
+  const currentPlanStatus = account.subscriptionStatus
+    ? account.subscriptionStatus.replaceAll("_", " ")
+    : hasGenerationCredits
+      ? "active"
+      : "inactive";
+
+  useEffect(() => {
+    if (!hasGenerationCredits) {
+      setIsSettingsModalOpen(true);
+    }
+  }, [hasGenerationCredits]);
 
   useEffect(() => {
     uploadedImagesRef.current = uploadedImages;
@@ -309,6 +352,11 @@ export default function DashboardShell() {
   ]);
 
   async function handleUpload(files: FileList | null) {
+    if (!hasGenerationCredits) {
+      setIsSettingsModalOpen(true);
+      return;
+    }
+
     if (!files || files.length === 0) {
       return;
     }
@@ -375,6 +423,11 @@ export default function DashboardShell() {
   }
 
   async function handleMagicWand() {
+    if (!hasGenerationCredits) {
+      setIsSettingsModalOpen(true);
+      return;
+    }
+
     if (!activeImage || activeImage.status === "processing") {
       return;
     }
@@ -387,6 +440,11 @@ export default function DashboardShell() {
   }
 
   async function handleStudioShoot(presetPrompt?: string) {
+    if (!hasGenerationCredits) {
+      setIsSettingsModalOpen(true);
+      return;
+    }
+
     if (!activeImage || activeImage.status === "processing") {
       return;
     }
@@ -400,6 +458,11 @@ export default function DashboardShell() {
   }
 
   async function handlePromptSubmit() {
+    if (!hasGenerationCredits) {
+      setIsSettingsModalOpen(true);
+      return;
+    }
+
     if (!activeImage || activeImage.status === "processing" || prompt.trim().length === 0) {
       return;
     }
@@ -416,6 +479,11 @@ export default function DashboardShell() {
 
   async function handleCropPreset(preset: CropPreset) {
     setIsCropPopoverOpen(false);
+
+    if (!hasGenerationCredits) {
+      setIsSettingsModalOpen(true);
+      return;
+    }
 
     if (!activeImage || activeImage.status === "processing") {
       return;
@@ -502,9 +570,7 @@ export default function DashboardShell() {
 
       const contentType = response.headers.get("content-type") || "";
       const payload = contentType.includes("application/json")
-        ? ((await response.json()) as
-            | { imageBase64: string; mimeType: string }
-            | { error?: string })
+        ? ((await response.json()) as { imageBase64: string; mimeType: string } | { error?: string })
         : null;
 
       if (!response.ok || !payload || !("imageBase64" in payload) || !payload.imageBase64) {
@@ -534,8 +600,14 @@ export default function DashboardShell() {
           };
         }),
       );
+
+      setAccount((current) => ({
+        ...current,
+        creditsBalance: Math.max(0, current.creditsBalance - 1),
+        trialCreditsRemaining: Math.max(0, current.trialCreditsRemaining - 1),
+      }));
     } catch (error) {
-      const message = "Image edit failed.";
+      const message = error instanceof Error ? error.message : "Image edit failed.";
       setUploadedImages((current) =>
         current.map((image) =>
           image.id === imageId
@@ -548,15 +620,28 @@ export default function DashboardShell() {
             : image,
         ),
       );
+
+      if (message.toLowerCase().includes("no credits")) {
+        setAccount((current) => ({ ...current, creditsBalance: 0 }));
+        setIsSettingsModalOpen(true);
+      }
     }
   }
 
   function handleToolbarAction(label: string) {
     switch (label) {
       case "Upload":
+        if (!hasGenerationCredits) {
+          setIsSettingsModalOpen(true);
+          return;
+        }
         fileInputRef.current?.click();
         return;
       case "Studio":
+        if (!hasGenerationCredits) {
+          setIsSettingsModalOpen(true);
+          return;
+        }
         if (!activeImage || activeImage.status === "processing") {
           return;
         }
@@ -575,11 +660,19 @@ export default function DashboardShell() {
         void handleShare();
         return;
       case "AI":
+        if (!hasGenerationCredits) {
+          setIsSettingsModalOpen(true);
+          return;
+        }
         setIsCropPopoverOpen(false);
         setIsStudioPopoverOpen(false);
         void handleMagicWand();
         return;
       case "Crop":
+        if (!hasGenerationCredits) {
+          setIsSettingsModalOpen(true);
+          return;
+        }
         if (!activeImage || activeImage.status === "processing") {
           return;
         }
@@ -672,6 +765,77 @@ export default function DashboardShell() {
     }
   }
 
+  async function refreshAccountStatus() {
+    const response = await fetch("/api/account/status", { cache: "no-store" });
+    if (!response.ok) {
+      return;
+    }
+
+    const payload = await response.json().catch(() => null);
+    if (!payload?.user) {
+      return;
+    }
+
+    setAccount({
+      email: payload.user.email,
+      name: payload.user.name,
+      avatarUrl: payload.user.avatarUrl,
+      creditsBalance: payload.user.creditsBalance,
+      trialCreditsRemaining: payload.user.trialCreditsRemaining,
+      subscriptionPlan: payload.user.subscriptionPlan,
+      subscriptionStatus: payload.user.subscriptionStatus,
+      stripeCustomerId: payload.user.stripeCustomerId,
+    });
+  }
+
+  async function startCheckout(planKey: string) {
+    setSettingsBusyAction(planKey);
+    setSettingsError(null);
+
+    try {
+      const response = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planKey }),
+      });
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok || !payload?.checkoutUrl) {
+        throw new Error(payload?.error || "Unable to start checkout.");
+      }
+
+      window.location.href = String(payload.checkoutUrl);
+    } catch (error) {
+      setSettingsError(error instanceof Error ? error.message : "Unable to start checkout.");
+      setSettingsBusyAction(null);
+    }
+  }
+
+  async function openBillingPortal() {
+    setSettingsBusyAction("billing_portal");
+    setSettingsError(null);
+
+    try {
+      const response = await fetch("/api/stripe/billing-portal", { method: "POST" });
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok || !payload?.portalUrl) {
+        throw new Error(payload?.error || "Unable to open billing portal.");
+      }
+
+      window.location.href = String(payload.portalUrl);
+    } catch (error) {
+      setSettingsError(error instanceof Error ? error.message : "Unable to open billing portal.");
+      setSettingsBusyAction(null);
+    }
+  }
+
+  async function handleLogout() {
+    setSettingsBusyAction("logout");
+    await fetch("/api/auth/logout", { method: "POST" });
+    window.location.href = "/landing";
+  }
+
   return (
     <div className="workspace-shell">
       <input
@@ -701,6 +865,7 @@ export default function DashboardShell() {
                   aria-label={item.label}
                   className={`workspace-toolbar-icon${isCropPopoverOpen ? " is-active" : ""}`}
                   type="button"
+                  disabled={!hasGenerationCredits}
                   onClick={() => handleToolbarAction(item.label)}
                 >
                   {item.icon}
@@ -727,6 +892,7 @@ export default function DashboardShell() {
                   aria-label={item.label}
                   className={`workspace-toolbar-icon${isStudioPopoverOpen ? " is-active" : ""}`}
                   type="button"
+                  disabled={!hasGenerationCredits}
                   onClick={() => handleToolbarAction(item.label)}
                 >
                   {item.icon}
@@ -756,6 +922,7 @@ export default function DashboardShell() {
                 aria-label={item.label}
                 className="workspace-toolbar-icon"
                 type="button"
+                disabled={(item.label === "Upload" || item.label === "AI") && !hasGenerationCredits}
                 onClick={() => handleToolbarAction(item.label)}
               >
                 {item.icon}
@@ -796,6 +963,7 @@ export default function DashboardShell() {
               aria-label="Upload images"
               className="workspace-panel-upload"
               type="button"
+              disabled={!hasGenerationCredits}
               onClick={() => fileInputRef.current?.click()}
             >
               <UploadIcon />
@@ -859,6 +1027,7 @@ export default function DashboardShell() {
                           className="workspace-prompt-input"
                           placeholder="Describe how FotoShoot should transform this photo..."
                           value={prompt}
+                          disabled={!hasGenerationCredits}
                           onChange={(event) => setPrompt(event.target.value)}
                           onKeyDown={(event) => {
                             if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
@@ -871,7 +1040,7 @@ export default function DashboardShell() {
                           aria-label="Send prompt"
                           className="workspace-prompt-submit"
                           type="button"
-                          disabled={isPromptDisabled}
+                          disabled={isPromptDisabled || !hasGenerationCredits}
                           onClick={() => void handlePromptSubmit()}
                         >
                           <PaperPlaneIcon />
@@ -882,7 +1051,10 @@ export default function DashboardShell() {
                 </div>
               ) : (
                 <div className="workspace-image-empty">
-                  <p>Upload Photos</p>
+                  <div>
+                    <p>Upload Photos</p>
+                    {!hasGenerationCredits ? <small className="workspace-credits-empty-note">{generationLockReason}</small> : null}
+                  </div>
                 </div>
               )}
             </div>
@@ -908,14 +1080,107 @@ export default function DashboardShell() {
 
       {isSettingsModalOpen ? (
         <div className="workspace-settings-modal" role="dialog" aria-modal="true" aria-label="Settings">
-          <button
-            aria-label="Close settings"
-            className="workspace-settings-close"
-            type="button"
-            onClick={() => setIsSettingsModalOpen(false)}
-          >
-            <CloseIcon />
-          </button>
+          <div className="workspace-settings-media">
+            <img alt="" className="workspace-settings-image" src="/assets/hero-image-01.png" />
+            <div className="workspace-settings-image-overlay" />
+            <div className="workspace-settings-badge">
+              <span>Workspace access</span>
+              <strong>{hasGenerationCredits ? `${account.creditsBalance} credits available` : "Credits depleted"}</strong>
+            </div>
+          </div>
+
+          <div className="workspace-settings-content">
+            <button
+              aria-label="Close settings"
+              className="workspace-settings-close"
+              type="button"
+              onClick={() => setIsSettingsModalOpen(false)}
+            >
+              <CloseIcon />
+            </button>
+
+            <img alt="FotoShoot" className="workspace-settings-logo" src="/assets/fotoshoot-logo-white.png" />
+
+            <div className="workspace-settings-sections">
+              <section className="workspace-settings-section">
+                <p className="workspace-settings-kicker">Account Details</p>
+                <h2>{account.name || "FotoShoot User"}</h2>
+                <p>{account.email}</p>
+              </section>
+
+              <section className="workspace-settings-section">
+                <p className="workspace-settings-kicker">Current Plan</p>
+                <div className="workspace-settings-line">
+                  <strong>{currentPlanLabel}</strong>
+                  <span>{currentPlanStatus}</span>
+                </div>
+                <div className="workspace-settings-actions">
+                  <button className="workspace-settings-link" type="button" disabled={settingsBusyAction !== null} onClick={() => void startCheckout("starter")}>
+                    Starter
+                  </button>
+                  <button className="workspace-settings-link" type="button" disabled={settingsBusyAction !== null} onClick={() => void startCheckout("pro")}>
+                    Pro
+                  </button>
+                  <button className="workspace-settings-link" type="button" disabled={settingsBusyAction !== null} onClick={() => void startCheckout("studio")}>
+                    Studio
+                  </button>
+                  {account.stripeCustomerId ? (
+                    <button
+                      className="workspace-settings-link workspace-settings-link-muted"
+                      type="button"
+                      disabled={settingsBusyAction !== null}
+                      onClick={() => void openBillingPortal()}
+                    >
+                      Manage Billing
+                    </button>
+                  ) : null}
+                </div>
+              </section>
+
+              <section className="workspace-settings-section">
+                <p className="workspace-settings-kicker">Credit Balance</p>
+                <div className="workspace-settings-balance">{account.creditsBalance}</div>
+                <p>{account.trialCreditsRemaining} trial credits remaining</p>
+              </section>
+
+              <section className="workspace-settings-section">
+                <p className="workspace-settings-kicker">Top Up Actions</p>
+                <div className="workspace-settings-actions">
+                  <button className="workspace-settings-link" type="button" disabled={settingsBusyAction !== null} onClick={() => void startCheckout("top_up_50")}>
+                    Buy 50 Credits
+                  </button>
+                  <button className="workspace-settings-link" type="button" disabled={settingsBusyAction !== null} onClick={() => void startCheckout("top_up_100")}>
+                    Buy 100 Credits
+                  </button>
+                  <button className="workspace-settings-link workspace-settings-link-muted" type="button" disabled={settingsBusyAction !== null} onClick={() => void refreshAccountStatus()}>
+                    Refresh Balance
+                  </button>
+                </div>
+              </section>
+
+              <section className="workspace-settings-section">
+                <p className="workspace-settings-kicker">Help</p>
+                <div className="workspace-settings-actions">
+                  <a className="workspace-settings-link" href="/help">
+                    Help Center
+                  </a>
+                  <a className="workspace-settings-link workspace-settings-link-muted" href="/contact">
+                    Contact Support
+                  </a>
+                </div>
+              </section>
+
+              <section className="workspace-settings-section">
+                <p className="workspace-settings-kicker">Logout</p>
+                <button className="workspace-settings-link workspace-settings-link-danger" type="button" disabled={settingsBusyAction !== null} onClick={() => void handleLogout()}>
+                  Logout
+                </button>
+              </section>
+
+              {settingsError ? <p className="workspace-settings-error">{settingsError}</p> : null}
+              {!hasGenerationCredits ? <p className="workspace-settings-warning">{generationLockReason}</p> : null}
+            </div>
+          </div>
         </div>
       ) : null}
     </div>

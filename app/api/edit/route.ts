@@ -1,12 +1,19 @@
 import { NextResponse } from "next/server";
 import sharp from "sharp";
 
+import { getCurrentUser } from "@/lib/auth/current-user";
 import { editImageWithGemini, type EditMode } from "@/lib/gemini-image";
+import { consumeGenerationCredit } from "@/lib/users";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
+    const current = await getCurrentUser();
+    if (!current) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const formData = await request.formData();
     const image = formData.get("image");
     const mode = formData.get("mode");
@@ -18,6 +25,15 @@ export async function POST(request: Request) {
 
     if (!isEditMode(mode)) {
       return NextResponse.json({ error: "Invalid edit mode." }, { status: 400 });
+    }
+
+    const debitResult = await consumeGenerationCredit({
+      userId: current.user.id,
+      reason: `AI generation: ${mode}`,
+    });
+
+    if (!debitResult.ok) {
+      return NextResponse.json({ error: "No credits remaining. Top up or choose a plan to continue." }, { status: 402 });
     }
 
     const arrayBuffer = await image.arrayBuffer();
