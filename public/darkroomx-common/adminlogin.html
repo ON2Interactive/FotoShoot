@@ -151,11 +151,55 @@
         const form = document.getElementById("admin-login-form");
         const errorEl = document.getElementById("error");
         const submit = document.getElementById("submit");
+        let recaptchaSiteKey = "";
+        let recaptchaAction = "admin_login";
+        let recaptchaReadyPromise = Promise.resolve();
+
+        const loadRecaptchaScript = (siteKey) =>
+          new Promise((resolve, reject) => {
+            if (window.grecaptcha && typeof window.grecaptcha.ready === "function") {
+              window.grecaptcha.ready(resolve);
+              return;
+            }
+
+            const existing = document.querySelector('script[data-recaptcha="true"]');
+            if (existing) {
+              existing.addEventListener("load", () => window.grecaptcha?.ready(resolve), { once: true });
+              existing.addEventListener("error", reject, { once: true });
+              return;
+            }
+
+            const script = document.createElement("script");
+            script.src = `https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(siteKey)}`;
+            script.async = true;
+            script.defer = true;
+            script.dataset.recaptcha = "true";
+            script.addEventListener("load", () => {
+              if (!window.grecaptcha || typeof window.grecaptcha.ready !== "function") {
+                reject(new Error("reCAPTCHA failed to load."));
+                return;
+              }
+              window.grecaptcha.ready(resolve);
+            });
+            script.addEventListener("error", () => reject(new Error("reCAPTCHA failed to load.")));
+            document.head.appendChild(script);
+          });
 
         function showError(message) {
           errorEl.textContent = message;
           errorEl.style.display = "block";
         }
+
+        fetch("/api/recaptcha/site-key?action=admin_login")
+          .then((response) => response.json())
+          .then((payload) => {
+            const siteKey = String(payload?.siteKey || "").trim();
+            if (!siteKey) return;
+            recaptchaSiteKey = siteKey;
+            recaptchaAction = String(payload?.action || "admin_login");
+            recaptchaReadyPromise = loadRecaptchaScript(siteKey);
+          })
+          .catch(() => {});
 
         form.addEventListener("submit", async function (event) {
           event.preventDefault();
@@ -163,12 +207,23 @@
           submit.disabled = true;
 
           try {
+            let recaptchaToken = "";
+            if (recaptchaSiteKey) {
+              await recaptchaReadyPromise;
+              if (!window.grecaptcha || typeof window.grecaptcha.execute !== "function") {
+                showError("Security check failed to initialize. Please refresh and try again.");
+                return;
+              }
+              recaptchaToken = await window.grecaptcha.execute(recaptchaSiteKey, { action: recaptchaAction });
+            }
+
             const response = await fetch("/api/admin/auth", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 email: document.getElementById("email").value,
                 password: document.getElementById("password").value,
+                recaptchaToken,
               }),
             });
 

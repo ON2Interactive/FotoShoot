@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendFotoShootContactEmail } from "@/lib/email";
+import { verifyRecaptchaToken } from "@/lib/recaptcha";
 
 function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim().toLowerCase());
@@ -13,6 +14,7 @@ export async function POST(request: NextRequest) {
     const subject = String(body?.subject || "").trim();
     const message = String(body?.message || "").trim();
     const company = String(body?.company || "").trim();
+    const recaptchaToken = String(body?.recaptchaToken || "").trim();
 
     if (company) {
       return NextResponse.json({ ok: true });
@@ -24,6 +26,19 @@ export async function POST(request: NextRequest) {
 
     if (!isValidEmail(email)) {
       return NextResponse.json({ error: "A valid email address is required." }, { status: 400 });
+    }
+
+    const recaptchaResult = await verifyRecaptchaToken({
+      token: recaptchaToken,
+      expectedAction: "contact_submit",
+      minScore: 0.5,
+    });
+
+    if (!recaptchaResult.ok) {
+      return NextResponse.json(
+        { error: "Security verification failed. Please refresh and try again." },
+        { status: 400 },
+      );
     }
 
     const result = await sendFotoShootContactEmail({
