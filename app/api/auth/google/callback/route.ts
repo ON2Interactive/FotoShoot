@@ -24,19 +24,29 @@ export async function GET(request: NextRequest) {
     const syncResult = await upsertUserFromGoogleProfile(user);
 
     if (syncResult.isNewUser) {
-      sendFotoShootWelcomeEmail({
-        request,
-        userEmail: user.email,
-        userName: user.name,
-      }).catch((error) => {
-        console.error("Welcome email failed:", error?.message || error);
-      });
+      const emailResults = await Promise.allSettled([
+        sendFotoShootWelcomeEmail({
+          request,
+          userEmail: user.email,
+          userName: user.name,
+        }),
+        sendFotoShootSignupNotificationEmail({
+          userEmail: user.email,
+          userName: user.name,
+        }),
+      ]);
 
-      sendFotoShootSignupNotificationEmail({
-        userEmail: user.email,
-        userName: user.name,
-      }).catch((error) => {
-        console.error("Signup notification email failed:", error?.message || error);
+      emailResults.forEach((result, index) => {
+        if (result.status === "rejected") {
+          const label = index === 0 ? "Welcome email" : "Signup notification email";
+          console.error(`${label} failed:`, result.reason);
+          return;
+        }
+
+        if (!result.value?.ok) {
+          const label = index === 0 ? "Welcome email" : "Signup notification email";
+          console.error(`${label} failed:`, result.value?.reason || "unknown_error");
+        }
       });
     }
 
