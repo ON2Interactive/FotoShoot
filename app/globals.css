@@ -599,9 +599,8 @@ button {
   display: grid;
   gap: 8px;
   padding: 22px 24px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 24px;
-  background: rgba(8, 10, 14, 0.5);
+  background: rgba(8, 10, 14, 0.38);
   backdrop-filter: blur(20px);
 }
 
@@ -617,6 +616,12 @@ button {
   font-size: clamp(22px, 3vw, 36px);
   line-height: 1.05;
   letter-spacing: -0.04em;
+}
+
+.workspace-settings-badge em {
+  color: rgba(255, 255, 255, 0.68);
+  font-style: normal;
+  font-size: 14px;
 }
 
 .workspace-settings-content {
@@ -641,21 +646,11 @@ button {
 }
 
 .workspace-settings-section {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  padding-bottom: 18px;
+  padding-bottom: 8px;
 }
 
 .workspace-settings-section:last-child {
-  border-bottom: 0;
   padding-bottom: 0;
-}
-
-.workspace-settings-kicker {
-  margin: 0 0 8px;
-  color: rgba(255, 255, 255, 0.48);
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
 }
 
 .workspace-settings-section h2,
@@ -665,9 +660,10 @@ button {
 
 .workspace-settings-section h2 {
   color: #ffffff;
-  font-size: 24px;
+  font-size: 15px;
   line-height: 1.1;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.01em;
+  margin-bottom: 8px;
 }
 
 .workspace-settings-section p {
@@ -713,20 +709,19 @@ button {
 .workspace-settings-link {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  min-height: 42px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 999px;
-  padding: 0 16px;
-  background: rgba(255, 255, 255, 0.06);
+  justify-content: flex-start;
+  min-height: 32px;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
   color: #ffffff;
   text-decoration: none;
-  transition: background-color 160ms ease, border-color 160ms ease, opacity 160ms ease, transform 160ms ease;
+  transition: color 160ms ease, opacity 160ms ease;
 }
 
 .workspace-settings-link:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.24);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .workspace-settings-link:disabled {
@@ -754,13 +749,11 @@ button {
 .workspace-settings-error {
   color: #ffb4b4;
   background: rgba(140, 30, 30, 0.2);
-  border: 1px solid rgba(248, 113, 113, 0.22);
 }
 
 .workspace-settings-warning {
   color: #ffe0aa;
   background: rgba(157, 88, 0, 0.18);
-  border: 1px solid rgba(245, 158, 11, 0.22);
 }
 
 .workspace-settings-close {

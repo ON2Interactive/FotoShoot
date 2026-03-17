@@ -1081,11 +1081,12 @@ export default function DashboardShell({
       {isSettingsModalOpen ? (
         <div className="workspace-settings-modal" role="dialog" aria-modal="true" aria-label="Settings">
           <div className="workspace-settings-media">
-            <img alt="" className="workspace-settings-image" src="/assets/hero-image-01.png" />
+            <img alt="" className="workspace-settings-image" src="/assets/Hero-Dark.png" />
             <div className="workspace-settings-image-overlay" />
             <div className="workspace-settings-badge">
-              <span>Workspace access</span>
-              <strong>{hasGenerationCredits ? `${account.creditsBalance} credits available` : "Credits depleted"}</strong>
+              <span>FotoShoot account</span>
+              <strong>{account.name || "FotoShoot User"}</strong>
+              <em>{hasGenerationCredits ? `${account.creditsBalance} credits available` : "Credits depleted"}</em>
             </div>
           </div>
 
@@ -1103,13 +1104,12 @@ export default function DashboardShell({
 
             <div className="workspace-settings-sections">
               <section className="workspace-settings-section">
-                <p className="workspace-settings-kicker">Account Details</p>
-                <h2>{account.name || "FotoShoot User"}</h2>
-                <p>{account.email}</p>
+                <h2>Account Details</h2>
+                <p>{account.name || "FotoShoot User"}</p>
               </section>
 
               <section className="workspace-settings-section">
-                <p className="workspace-settings-kicker">Current Plan</p>
+                <h2>Current Plan</h2>
                 <div className="workspace-settings-line">
                   <strong>{currentPlanLabel}</strong>
                   <span>{currentPlanStatus}</span>
@@ -1138,13 +1138,13 @@ export default function DashboardShell({
               </section>
 
               <section className="workspace-settings-section">
-                <p className="workspace-settings-kicker">Credit Balance</p>
+                <h2>Credit Balance</h2>
                 <div className="workspace-settings-balance">{account.creditsBalance}</div>
                 <p>{account.trialCreditsRemaining} trial credits remaining</p>
               </section>
 
               <section className="workspace-settings-section">
-                <p className="workspace-settings-kicker">Top Up Actions</p>
+                <h2>Top Up Actions</h2>
                 <div className="workspace-settings-actions">
                   <button className="workspace-settings-link" type="button" disabled={settingsBusyAction !== null} onClick={() => void startCheckout("top_up_50")}>
                     Buy 50 Credits
@@ -1159,7 +1159,7 @@ export default function DashboardShell({
               </section>
 
               <section className="workspace-settings-section">
-                <p className="workspace-settings-kicker">Help</p>
+                <h2>Help</h2>
                 <div className="workspace-settings-actions">
                   <a className="workspace-settings-link" href="/help">
                     Help Center
@@ -1171,7 +1171,7 @@ export default function DashboardShell({
               </section>
 
               <section className="workspace-settings-section">
-                <p className="workspace-settings-kicker">Logout</p>
+                <h2>Logout</h2>
                 <button className="workspace-settings-link workspace-settings-link-danger" type="button" disabled={settingsBusyAction !== null} onClick={() => void handleLogout()}>
                   Logout
                 </button>
