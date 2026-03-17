@@ -569,6 +569,7 @@ button {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(420px, 50vw);
   background: #06080b;
+  cursor: default;
 }
 
 .workspace-settings-media {
@@ -631,6 +632,7 @@ button {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  cursor: default;
 }
 
 .workspace-settings-logo {
@@ -718,6 +720,8 @@ button {
   color: #ffffff;
   text-decoration: none;
   cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
   transition: color 160ms ease, opacity 160ms ease;
 }
 
@@ -770,6 +774,8 @@ button {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
   padding: 0;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.04);
