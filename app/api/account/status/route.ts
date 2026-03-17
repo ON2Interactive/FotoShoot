@@ -23,6 +23,7 @@ export async function GET() {
         subscriptionPlan: user.subscription_plan,
         subscriptionStatus: user.subscription_status,
         stripeCustomerId: user.stripe_customer_id,
+        isInternalAdmin: current.isInternalAdmin,
       },
     });
   } catch (error) {

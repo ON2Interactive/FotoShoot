@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import DashboardShell from "@/components/dashboard-shell";
+import { isInternalAdminEmail } from "@/lib/auth/admin-access";
 import { getAuthSession } from "@/lib/auth/session";
 import { getUserByGoogleSub } from "@/lib/users";
 
@@ -22,6 +23,7 @@ export default async function DashboardPage() {
         subscriptionPlan: user?.subscription_plan ?? null,
         subscriptionStatus: user?.subscription_status ?? null,
         stripeCustomerId: user?.stripe_customer_id ?? null,
+        isInternalAdmin: isInternalAdminEmail(session.email),
       }}
     />
   );

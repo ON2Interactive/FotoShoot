@@ -27,13 +27,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid edit mode." }, { status: 400 });
     }
 
-    const debitResult = await consumeGenerationCredit({
-      userId: current.user.id,
-      reason: `AI generation: ${mode}`,
-    });
+    if (!current.isInternalAdmin) {
+      const debitResult = await consumeGenerationCredit({
+        userId: current.user.id,
+        reason: `AI generation: ${mode}`,
+      });
 
-    if (!debitResult.ok) {
-      return NextResponse.json({ error: "No credits remaining. Top up or choose a plan to continue." }, { status: 402 });
+      if (!debitResult.ok) {
+        return NextResponse.json({ error: "No credits remaining. Top up or choose a plan to continue." }, { status: 402 });
+      }
     }
 
     const arrayBuffer = await image.arrayBuffer();

@@ -21,6 +21,7 @@ type AccountSummary = {
   subscriptionPlan: string | null;
   subscriptionStatus: string | null;
   stripeCustomerId: string | null;
+  isInternalAdmin: boolean;
 };
 
 type UploadedImage = {
@@ -121,6 +122,7 @@ export default function DashboardShell({
     subscriptionPlan: null,
     subscriptionStatus: null,
     stripeCustomerId: null,
+    isInternalAdmin: false,
   },
 }: {
   initialAccount?: AccountSummary;
@@ -156,12 +158,17 @@ export default function DashboardShell({
   const activeImageFilter = `brightness(${brightness}%) saturate(${saturation}%) contrast(${contrast}%) sepia(${warmthSepia}%) hue-rotate(${warmthHue}deg) sepia(${sepia}%)`;
   const isPromptDisabled = !activeImage || activeImage.status === "processing" || prompt.trim().length === 0;
   const isProcessingModalOpen = activeImage?.status === "processing" || isExporting;
-  const hasGenerationCredits = account.creditsBalance > 0;
+  const hasUnlimitedAccess = account.isInternalAdmin;
+  const hasGenerationCredits = hasUnlimitedAccess || account.creditsBalance > 0;
   const generationLockReason = "No credits remaining. Top up or choose a plan to continue.";
-  const currentPlanLabel = account.subscriptionPlan
+  const currentPlanLabel = hasUnlimitedAccess
+    ? "Admin Access"
+    : account.subscriptionPlan
     ? account.subscriptionPlan.replaceAll("_", " ").replace(/\b\w/g, (char) => char.toUpperCase())
     : "Trial";
-  const currentPlanStatus = account.subscriptionStatus
+  const currentPlanStatus = hasUnlimitedAccess
+    ? "internal"
+    : account.subscriptionStatus
     ? account.subscriptionStatus.replaceAll("_", " ")
     : hasGenerationCredits
       ? "active"
@@ -603,8 +610,10 @@ export default function DashboardShell({
 
       setAccount((current) => ({
         ...current,
-        creditsBalance: Math.max(0, current.creditsBalance - 1),
-        trialCreditsRemaining: Math.max(0, current.trialCreditsRemaining - 1),
+        creditsBalance: current.isInternalAdmin ? current.creditsBalance : Math.max(0, current.creditsBalance - 1),
+        trialCreditsRemaining: current.isInternalAdmin
+          ? current.trialCreditsRemaining
+          : Math.max(0, current.trialCreditsRemaining - 1),
       }));
     } catch (error) {
       const message = error instanceof Error ? error.message : "Image edit failed.";
@@ -785,6 +794,7 @@ export default function DashboardShell({
       subscriptionPlan: payload.user.subscriptionPlan,
       subscriptionStatus: payload.user.subscriptionStatus,
       stripeCustomerId: payload.user.stripeCustomerId,
+      isInternalAdmin: Boolean(payload.user.isInternalAdmin),
     });
   }
 
@@ -1094,7 +1104,13 @@ export default function DashboardShell({
             <div className="workspace-settings-badge">
               <span>FotoShoot account</span>
               <strong>{account.name || "FotoShoot User"}</strong>
-              <em>{hasGenerationCredits ? `${account.creditsBalance} credits available` : "Credits depleted"}</em>
+              <em>
+                {hasUnlimitedAccess
+                  ? "Unlimited access"
+                  : hasGenerationCredits
+                    ? `${account.creditsBalance} credits available`
+                    : "Credits depleted"}
+              </em>
             </div>
           </div>
 
@@ -1122,47 +1138,51 @@ export default function DashboardShell({
                   <strong>{currentPlanLabel}</strong>
                   <span>{currentPlanStatus}</span>
                 </div>
-                <div className="workspace-settings-actions">
-                  <button className="workspace-settings-link" type="button" disabled={settingsBusyAction !== null} onClick={() => void startCheckout("starter")}>
-                    Starter
-                  </button>
-                  <button className="workspace-settings-link" type="button" disabled={settingsBusyAction !== null} onClick={() => void startCheckout("pro")}>
-                    Pro
-                  </button>
-                  <button className="workspace-settings-link" type="button" disabled={settingsBusyAction !== null} onClick={() => void startCheckout("studio")}>
-                    Studio
-                  </button>
-                  <button
-                    className="workspace-settings-link workspace-settings-link-muted"
-                    type="button"
-                    disabled={settingsBusyAction !== null}
-                    onClick={() => void openBillingPortal()}
-                  >
-                    Manage Billing
-                  </button>
-                </div>
+                {!hasUnlimitedAccess ? (
+                  <div className="workspace-settings-actions">
+                    <button className="workspace-settings-link" type="button" disabled={settingsBusyAction !== null} onClick={() => void startCheckout("starter")}>
+                      Starter
+                    </button>
+                    <button className="workspace-settings-link" type="button" disabled={settingsBusyAction !== null} onClick={() => void startCheckout("pro")}>
+                      Pro
+                    </button>
+                    <button className="workspace-settings-link" type="button" disabled={settingsBusyAction !== null} onClick={() => void startCheckout("studio")}>
+                      Studio
+                    </button>
+                    <button
+                      className="workspace-settings-link workspace-settings-link-muted"
+                      type="button"
+                      disabled={settingsBusyAction !== null}
+                      onClick={() => void openBillingPortal()}
+                    >
+                      Manage Billing
+                    </button>
+                  </div>
+                ) : null}
               </section>
 
               <section className="workspace-settings-section">
                 <h2>Credit Balance</h2>
-                <div className="workspace-settings-balance">{account.creditsBalance}</div>
-                <p>{account.trialCreditsRemaining} trial credits remaining</p>
+                <div className="workspace-settings-balance">{hasUnlimitedAccess ? "Unlimited" : account.creditsBalance}</div>
+                <p>{hasUnlimitedAccess ? "Internal admin access is active." : `${account.trialCreditsRemaining} trial credits remaining`}</p>
               </section>
 
-              <section className="workspace-settings-section">
-                <h2>Top Up Actions</h2>
-                <div className="workspace-settings-actions">
-                  <button className="workspace-settings-link" type="button" disabled={settingsBusyAction !== null} onClick={() => void startCheckout("top_up_50")}>
-                    Buy 50 Credits
-                  </button>
-                  <button className="workspace-settings-link" type="button" disabled={settingsBusyAction !== null} onClick={() => void startCheckout("top_up_100")}>
-                    Buy 100 Credits
-                  </button>
-                  <button className="workspace-settings-link workspace-settings-link-muted" type="button" disabled={settingsBusyAction !== null} onClick={() => void refreshAccountStatus()}>
-                    Refresh Balance
-                  </button>
-                </div>
-              </section>
+              {!hasUnlimitedAccess ? (
+                <section className="workspace-settings-section">
+                  <h2>Top Up Actions</h2>
+                  <div className="workspace-settings-actions">
+                    <button className="workspace-settings-link" type="button" disabled={settingsBusyAction !== null} onClick={() => void startCheckout("top_up_50")}>
+                      Buy 50 Credits
+                    </button>
+                    <button className="workspace-settings-link" type="button" disabled={settingsBusyAction !== null} onClick={() => void startCheckout("top_up_100")}>
+                      Buy 100 Credits
+                    </button>
+                    <button className="workspace-settings-link workspace-settings-link-muted" type="button" disabled={settingsBusyAction !== null} onClick={() => void refreshAccountStatus()}>
+                      Refresh Balance
+                    </button>
+                  </div>
+                </section>
+              ) : null}
 
               <section className="workspace-settings-section">
                 <h2>Help</h2>
