@@ -269,3 +269,33 @@ export async function consumeGenerationCredit({
 
   return { ok: true };
 }
+
+export async function hasSignupNotificationBeenSent(userId: string) {
+  const supabase = getSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("credit_ledger")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("type", "signup_notification")
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return Boolean(data);
+}
+
+export async function markSignupNotificationSent(userId: string) {
+  const supabase = getSupabaseServerClient();
+  const { error } = await supabase.from("credit_ledger").insert({
+    user_id: userId,
+    type: "signup_notification",
+    credits: 0,
+    reason: "Admin signup notification sent",
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}

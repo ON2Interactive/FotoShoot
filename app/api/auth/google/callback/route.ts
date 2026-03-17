@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { exchangeGoogleCode, fetchGoogleUser } from "@/lib/auth/google";
 import { setAuthSession, validateOAuthState } from "@/lib/auth/session";
-import { upsertUserFromGoogleProfile } from "@/lib/users";
-import { sendFotoShootSignupNotificationEmail, sendFotoShootWelcomeEmail } from "@/lib/email";
+import { upsertUserFromGoogleProfile, getUserByGoogleSub } from "@/lib/users";
+import { sendFotoShootWelcomeEmail } from "@/lib/email";
+import { ensureAdminSignupNotification } from "@/lib/signup-notifications";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code") || "";
@@ -24,28 +25,34 @@ export async function GET(request: NextRequest) {
     const syncResult = await upsertUserFromGoogleProfile(user);
 
     if (syncResult.isNewUser) {
+      const persistedUser = await getUserByGoogleSub(user.sub);
       const emailResults = await Promise.allSettled([
         sendFotoShootWelcomeEmail({
           request,
           userEmail: user.email,
           userName: user.name,
         }),
-        sendFotoShootSignupNotificationEmail({
-          userEmail: user.email,
-          userName: user.name,
-        }),
+        persistedUser
+          ? ensureAdminSignupNotification({
+              user: persistedUser,
+              fallbackName: user.name,
+            })
+          : Promise.resolve({ ok: false, reason: "user_not_found_for_signup_notification" }),
       ]);
 
       emailResults.forEach((result, index) => {
+        const label = index === 0 ? "Welcome email" : "Signup notification email";
         if (result.status === "rejected") {
-          const label = index === 0 ? "Welcome email" : "Signup notification email";
           console.error(`${label} failed:`, result.reason);
           return;
         }
 
         if (!result.value?.ok) {
-          const label = index === 0 ? "Welcome email" : "Signup notification email";
-          console.error(`${label} failed:`, result.value?.reason || "unknown_error");
+          const reason =
+            "reason" in result.value && result.value.reason
+              ? result.value.reason
+              : "unknown_error";
+          console.error(`${label} failed:`, reason);
         }
       });
     }
