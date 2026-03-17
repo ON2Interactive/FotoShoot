@@ -15,14 +15,14 @@ export const metadata: Metadata = {
       "Edit product photos, generate polished brand visuals, and resize images for Instagram with FotoShoot.",
     url: "https://fotoshoot.cloud",
     siteName: "FotoShoot",
-    images: ["/assets/Share.png"],
+    images: ["https://fotoshoot.cloud/assets/Share.png"],
   },
   twitter: {
     card: "summary_large_image",
     title: "FotoShoot | AI Product Photo Editor & Resize Images for Instagram",
     description:
       "Edit product photos, generate polished brand visuals, and resize images for Instagram with FotoShoot.",
-    images: ["/assets/Share.png"],
+    images: ["https://fotoshoot.cloud/assets/Share.png"],
   },
 };
 
