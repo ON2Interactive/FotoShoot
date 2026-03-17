@@ -9,6 +9,8 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     return [
+      { source: "/adminlogin", destination: "/darkroomx-common/adminlogin.html" },
+      { source: "/admin", destination: "/darkroomx-common/admin.html" },
       { source: "/landing", destination: "/darkroomx-common/index.html" },
       { source: "/pricing", destination: "/darkroomx-common/pricing.html" },
       { source: "/faqs", destination: "/darkroomx-common/faqs.html" },

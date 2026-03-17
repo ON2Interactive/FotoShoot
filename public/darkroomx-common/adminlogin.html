@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FotoShoot Admin Login</title>
+    <meta name="robots" content="noindex,nofollow,noarchive" />
+    <link rel="icon" type="image/png" href="/assets/Favicon.png" />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #050505;
+        --panel: rgba(255, 255, 255, 0.04);
+        --panel-border: rgba(255, 255, 255, 0.1);
+        --muted: rgba(255, 255, 255, 0.55);
+        --soft: rgba(255, 255, 255, 0.22);
+        --text: #ffffff;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background:
+          radial-gradient(circle at top left, rgba(255, 255, 255, 0.08), transparent 28%),
+          linear-gradient(180deg, #090909 0%, #020202 100%);
+        color: var(--text);
+      }
+
+      .admin-login {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 32px;
+      }
+
+      .card {
+        width: min(100%, 420px);
+        border: 1px solid var(--panel-border);
+        border-radius: 28px;
+        background: rgba(0, 0, 0, 0.68);
+        backdrop-filter: blur(24px);
+        padding: 32px;
+        box-shadow: 0 30px 90px rgba(0, 0, 0, 0.45);
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        margin-bottom: 28px;
+      }
+
+      .brand img {
+        width: 138px;
+        display: block;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 30px;
+        letter-spacing: -0.03em;
+      }
+
+      p {
+        margin: 0 0 24px;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.65;
+      }
+
+      form {
+        display: grid;
+        gap: 14px;
+      }
+
+      input {
+        width: 100%;
+        border: 1px solid var(--panel-border);
+        border-radius: 14px;
+        padding: 14px 16px;
+        background: var(--panel);
+        color: var(--text);
+        font-size: 14px;
+        outline: none;
+      }
+
+      input:focus {
+        border-color: rgba(255, 255, 255, 0.28);
+      }
+
+      button {
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 14px;
+        background: #ffffff;
+        color: #0a0a0a;
+        padding: 14px 18px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .error {
+        display: none;
+        margin: 0;
+        border: 1px solid rgba(248, 113, 113, 0.28);
+        border-radius: 12px;
+        padding: 12px 14px;
+        color: #fca5a5;
+        background: rgba(127, 29, 29, 0.2);
+        font-size: 13px;
+      }
+
+      .note {
+        margin-top: 18px;
+        color: var(--soft);
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="admin-login">
+      <section class="card">
+        <a class="brand" href="/landing" aria-label="FotoShoot home">
+          <img src="/assets/fotoshoot-logo-white.png" alt="FotoShoot" />
+        </a>
+        <h1>Admin Login</h1>
+        <p>Private entry for FotoShoot account administration. This page is not linked publicly.</p>
+
+        <form id="admin-login-form">
+          <input id="email" type="email" placeholder="Admin email" autocomplete="email" required />
+          <input id="password" type="password" placeholder="Password" autocomplete="current-password" required />
+          <p id="error" class="error"></p>
+          <button id="submit" type="submit">Sign In</button>
+        </form>
+
+        <div class="note">Use the admin credentials configured in Vercel with <code>ADMIN_LOGIN_EMAIL</code> and <code>ADMIN_LOGIN_PASSWORD</code>.</div>
+      </section>
+    </main>
+
+    <script>
+      (function () {
+        const form = document.getElementById("admin-login-form");
+        const errorEl = document.getElementById("error");
+        const submit = document.getElementById("submit");
+
+        function showError(message) {
+          errorEl.textContent = message;
+          errorEl.style.display = "block";
+        }
+
+        form.addEventListener("submit", async function (event) {
+          event.preventDefault();
+          errorEl.style.display = "none";
+          submit.disabled = true;
+
+          try {
+            const response = await fetch("/api/admin/auth", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                email: document.getElementById("email").value,
+                password: document.getElementById("password").value,
+              }),
+            });
+
+            if (!response.ok) {
+              const payload = await response.json().catch(() => ({}));
+              showError(payload.error || "Invalid email or password.");
+              return;
+            }
+
+            window.location.href = "/admin";
+          } catch (error) {
+            showError("Unable to sign in right now.");
+          } finally {
+            submit.disabled = false;
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

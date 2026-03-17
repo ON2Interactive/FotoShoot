@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FotoShoot Admin</title>
+    <meta name="robots" content="noindex,nofollow,noarchive" />
+    <link rel="icon" type="image/png" href="/assets/Favicon.png" />
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #050505;
+        --panel: rgba(255, 255, 255, 0.04);
+        --panel-border: rgba(255, 255, 255, 0.1);
+        --muted: rgba(255, 255, 255, 0.55);
+        --soft: rgba(255, 255, 255, 0.28);
+        --text: #ffffff;
+        --danger: #f87171;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background:
+          radial-gradient(circle at top left, rgba(255, 255, 255, 0.08), transparent 24%),
+          linear-gradient(180deg, #090909 0%, #020202 100%);
+        color: var(--text);
+      }
+
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+
+      .shell {
+        width: min(1320px, calc(100vw - 40px));
+        margin: 0 auto;
+        padding: 24px 0 56px;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding-bottom: 28px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .brand img {
+        width: 134px;
+        display: block;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 32px;
+        letter-spacing: -0.03em;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      .toolbar {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .search {
+        width: min(320px, 100%);
+        border: 1px solid var(--panel-border);
+        border-radius: 14px;
+        padding: 12px 14px;
+        background: var(--panel);
+        color: var(--text);
+        outline: none;
+      }
+
+      .button {
+        border: 1px solid var(--panel-border);
+        border-radius: 14px;
+        padding: 12px 16px;
+        background: transparent;
+        color: var(--text);
+        cursor: pointer;
+      }
+
+      .button:hover {
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      .panel {
+        border: 1px solid var(--panel-border);
+        border-radius: 24px;
+        overflow: hidden;
+        background: rgba(0, 0, 0, 0.5);
+      }
+
+      .panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 18px 20px;
+        border-bottom: 1px solid var(--panel-border);
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 1160px;
+      }
+
+      th,
+      td {
+        padding: 14px 16px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        text-align: left;
+        vertical-align: middle;
+      }
+
+      th {
+        font-size: 12px;
+        color: var(--muted);
+        font-weight: 600;
+      }
+
+      td {
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.84);
+      }
+
+      tr:hover {
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      .table-input,
+      .table-select {
+        width: 100%;
+        border: 1px solid var(--panel-border);
+        border-radius: 10px;
+        padding: 8px 10px;
+        background: var(--panel);
+        color: var(--text);
+      }
+
+      .actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .link-button {
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: rgba(255, 255, 255, 0.75);
+        cursor: pointer;
+      }
+
+      .link-button:hover {
+        color: #ffffff;
+      }
+
+      .link-button.danger:hover {
+        color: var(--danger);
+      }
+
+      .empty {
+        padding: 48px 20px;
+        text-align: center;
+        color: var(--soft);
+      }
+
+      .status {
+        display: inline-flex;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.84);
+      }
+
+      @media (max-width: 900px) {
+        .topbar,
+        .panel-header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .toolbar {
+          width: 100%;
+          flex-wrap: wrap;
+        }
+
+        .search {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div class="brand">
+          <img src="/assets/fotoshoot-logo-white.png" alt="FotoShoot" />
+          <div>
+            <h1>Admin</h1>
+            <div class="muted">User accounts, credits, trial balances, and plan status.</div>
+          </div>
+        </div>
+        <div class="toolbar">
+          <input id="search" class="search" type="search" placeholder="Search users by email or name" />
+          <button id="refresh" class="button" type="button">Refresh</button>
+          <button id="logout" class="button" type="button">Log Out</button>
+        </div>
+      </header>
+
+      <section class="panel">
+        <div class="panel-header">
+          <div><strong id="count">0 users</strong></div>
+          <div class="muted">Editing updates the FotoShoot <code>users</code> table directly.</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Credits</th>
+                <th>Trial Left</th>
+                <th>Trial Claimed</th>
+                <th>Plan</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="rows">
+              <tr>
+                <td colspan="10" class="empty">Loading users…</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      (function () {
+        const rows = document.getElementById("rows");
+        const search = document.getElementById("search");
+        const refresh = document.getElementById("refresh");
+        const logout = document.getElementById("logout");
+        const count = document.getElementById("count");
+        let users = [];
+
+        function formatDate(value) {
+          if (!value) return "—";
+          const date = new Date(value);
+          return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString();
+        }
+
+        function getFilteredUsers() {
+          const term = search.value.trim().toLowerCase();
+          if (!term) return users;
+          return users.filter((user) => {
+            const haystack = [
+              user.email,
+              user.first_name,
+              user.last_name,
+              user.subscription_plan,
+              user.subscription_status,
+            ]
+              .filter(Boolean)
+              .join(" ")
+              .toLowerCase();
+            return haystack.includes(term);
+          });
+        }
+
+        function escapeHtml(value) {
+          return String(value ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+        }
+
+        function render() {
+          const filteredUsers = getFilteredUsers();
+          count.textContent = filteredUsers.length + (filteredUsers.length === 1 ? " user" : " users");
+
+          if (!filteredUsers.length) {
+            rows.innerHTML = '<tr><td colspan="10" class="empty">No matching users found.</td></tr>';
+            return;
+          }
+
+          rows.innerHTML = filteredUsers
+            .map((user) => {
+              return `
+                <tr data-id="${escapeHtml(user.id)}">
+                  <td>${escapeHtml(user.email)}</td>
+                  <td><input class="table-input" data-field="first_name" value="${escapeHtml(user.first_name || "")}" /></td>
+                  <td><input class="table-input" data-field="last_name" value="${escapeHtml(user.last_name || "")}" /></td>
+                  <td><input class="table-input" data-field="credits_balance" type="number" min="0" value="${escapeHtml(user.credits_balance ?? 0)}" /></td>
+                  <td><input class="table-input" data-field="trial_credits_remaining" type="number" min="0" value="${escapeHtml(user.trial_credits_remaining ?? 0)}" /></td>
+                  <td>
+                    <select class="table-select" data-field="trial_claimed">
+                      <option value="true" ${user.trial_claimed ? "selected" : ""}>true</option>
+                      <option value="false" ${!user.trial_claimed ? "selected" : ""}>false</option>
+                    </select>
+                  </td>
+                  <td><input class="table-input" data-field="subscription_plan" value="${escapeHtml(user.subscription_plan || "")}" /></td>
+                  <td><input class="table-input" data-field="subscription_status" value="${escapeHtml(user.subscription_status || "")}" /></td>
+                  <td><span class="status">${escapeHtml(formatDate(user.created_at))}</span></td>
+                  <td>
+                    <div class="actions">
+                      <button class="link-button save" type="button">Save</button>
+                      <button class="link-button danger delete" type="button">Delete</button>
+                    </div>
+                  </td>
+                </tr>
+              `;
+            })
+            .join("");
+        }
+
+        async function loadUsers() {
+          const response = await fetch("/api/admin/users", { cache: "no-store" });
+          if (response.status === 401) {
+            window.location.href = "/adminlogin";
+            return;
+          }
+          const payload = await response.json();
+          if (!response.ok) {
+            throw new Error(payload.error || "Unable to load users.");
+          }
+          users = Array.isArray(payload.users) ? payload.users : [];
+          render();
+        }
+
+        async function saveRow(row) {
+          const id = row.dataset.id;
+          const payload = { id };
+          row.querySelectorAll("[data-field]").forEach((input) => {
+            payload[input.dataset.field] = input.value;
+          });
+          payload.trial_claimed = payload.trial_claimed === "true";
+
+          const response = await fetch("/api/admin/users", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          if (response.status === 401) {
+            window.location.href = "/adminlogin";
+            return;
+          }
+
+          const body = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            throw new Error(body.error || "Unable to update user.");
+          }
+
+          await loadUsers();
+        }
+
+        async function deleteRow(row) {
+          const id = row.dataset.id;
+          const email = row.children[0].textContent.trim();
+          if (!window.confirm("Delete " + email + "? This will remove the user record from FotoShoot.")) {
+            return;
+          }
+
+          const response = await fetch("/api/admin/users", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id }),
+          });
+
+          if (response.status === 401) {
+            window.location.href = "/adminlogin";
+            return;
+          }
+
+          const body = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            throw new Error(body.error || "Unable to delete user.");
+          }
+
+          await loadUsers();
+        }
+
+        rows.addEventListener("click", async function (event) {
+          const target = event.target;
+          if (!(target instanceof HTMLElement)) return;
+          const row = target.closest("tr");
+          if (!row) return;
+
+          try {
+            if (target.classList.contains("save")) {
+              await saveRow(row);
+            }
+            if (target.classList.contains("delete")) {
+              await deleteRow(row);
+            }
+          } catch (error) {
+            window.alert(error instanceof Error ? error.message : "Action failed.");
+          }
+        });
+
+        search.addEventListener("input", render);
+        refresh.addEventListener("click", function () {
+          loadUsers().catch((error) => window.alert(error.message || "Unable to refresh users."));
+        });
+        logout.addEventListener("click", async function () {
+          await fetch("/api/admin/logout", { method: "POST" });
+          window.location.href = "/adminlogin";
+        });
+
+        loadUsers().catch((error) => {
+          rows.innerHTML = '<tr><td colspan="10" class="empty">' + escapeHtml(error.message || "Unable to load users.") + "</td></tr>";
+        });
+      })();
+    </script>
+  </body>
+</html>
