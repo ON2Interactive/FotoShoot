@@ -841,7 +841,7 @@ export default function DashboardShell({
   async function handleLogout() {
     setSettingsBusyAction("logout");
     await fetch("/api/auth/logout", { method: "POST" });
-    window.location.href = "/landing";
+    window.location.href = "/";
   }
 
   return (
@@ -1132,16 +1132,14 @@ export default function DashboardShell({
                   <button className="workspace-settings-link" type="button" disabled={settingsBusyAction !== null} onClick={() => void startCheckout("studio")}>
                     Studio
                   </button>
-                  {account.stripeCustomerId ? (
-                    <button
-                      className="workspace-settings-link workspace-settings-link-muted"
-                      type="button"
-                      disabled={settingsBusyAction !== null}
-                      onClick={() => void openBillingPortal()}
-                    >
-                      Manage Billing
-                    </button>
-                  ) : null}
+                  <button
+                    className="workspace-settings-link workspace-settings-link-muted"
+                    type="button"
+                    disabled={settingsBusyAction !== null}
+                    onClick={() => void openBillingPortal()}
+                  >
+                    Manage Billing
+                  </button>
                 </div>
               </section>
 
