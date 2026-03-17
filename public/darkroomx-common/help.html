@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Help - FotoShoot</title>
+    <link rel="icon" type="image/png" href="/assets/Favicon.png" />
+    <link rel="stylesheet" href="/darkroomx-common/styles.css" />
+  </head>
+  <body class="common-page">
+    <main class="common-shell">
+      <header class="landing-nav">
+        <a class="landing-brand" href="/landing" aria-label="FotoShoot Home">
+          <img src="/assets/fotoshoot-logo-white.png" alt="FotoShoot" class="landing-brand-logo" />
+        </a>
+        <nav class="landing-nav-links" aria-label="Primary">
+          <a href="/pricing">Pricing</a>
+          <a class="landing-cta-link" href="/signup">Try for Free</a>
+        </nav>
+      </header>
+
+      <section class="common-blank-section" aria-label="Help page content">
+        <div class="common-page-inner">
+          <h1>Help</h1>
+          <div class="legal-content">
+            <h2>Getting Started</h2>
+            <p>
+              New to FotoShoot? Start by creating your account on <a href="/signup">Sign Up</a>, then open the workspace
+              and upload your first product image.
+            </p>
+            <ul>
+              <li>Upload one or more product images</li>
+              <li>Clean up the shot and improve the baseline image</li>
+              <li>Use presets or prompts to direct the final look</li>
+              <li>Export polished assets for your channels</li>
+            </ul>
+
+            <h2>Core Workflow</h2>
+            <p>
+              FotoShoot is designed to help you move from rough source image to polished marketing asset in one focused
+              workflow. Upload, refine, direct, crop, and export without bouncing between multiple tools.
+            </p>
+
+            <h2>Using prompts and presets</h2>
+            <p>
+              FotoShoot gives you two simple ways to shape the result: choose a preset or describe the direction you want.
+              The clearer your instruction, the more predictable the output.
+            </p>
+            <ul>
+              <li>Use presets when you want a faster starting point</li>
+              <li>Use prompts when you want more specific art direction</li>
+              <li>Describe the environment, lighting, or surface you want</li>
+              <li>Keep instructions focused on what should change around the product</li>
+              <li>Try a few variations and keep the strongest result</li>
+            </ul>
+
+            <h2>Keeping the product accurate</h2>
+            <p>
+              FotoShoot is being built around product fidelity. The goal is to preserve the product itself while allowing
+              changes to the lighting, background, styling, and overall presentation.
+            </p>
+            <ul>
+              <li>Keep prompts specific and commercially realistic</li>
+              <li>Avoid asking the model to redesign the product itself</li>
+              <li>Review labels, proportions, and materials before export</li>
+            </ul>
+
+            <h2>Refreshing the browser</h2>
+            <p>
+              FotoShoot is being set up to preserve your active workspace locally so you do not lose your current work if
+              the page refreshes.
+            </p>
+            <ul>
+              <li>Give uploads a moment to save after major changes</li>
+              <li>Refresh only after edits finish processing</li>
+              <li>If something fails to restore, try reloading once more before starting over</li>
+            </p>
+
+            <h2>Exporting your assets</h2>
+            <p>
+              Once you have a result you like, export it for the channel you need. FotoShoot is intended to support
+              ecommerce, campaigns, ads, social content, and other product-marketing outputs.
+            </p>
+            <ul>
+              <li>Review the final image at full size before export</li>
+              <li>Check crop safety for the placement you need</li>
+              <li>Confirm the product still looks accurate before sharing or publishing</li>
+            </p>
+
+            <h2>Pricing and billing</h2>
+            <p>
+              Pricing is still being finalized. The most current plan information will be posted on the
+              <a href="/pricing">Pricing</a> page.
+            </p>
+            <p>
+              If you have billing or account questions, please reach out through <a href="/contact">Contact</a>.
+            </p>
+
+            <h2>Performance tips</h2>
+            <p>
+              For the smoothest experience, use a modern browser and give image processing a moment to complete before
+              triggering another action.
+            </p>
+            <ul>
+              <li>Use a modern browser and keep it updated</li>
+              <li>Use a stable internet connection for AI-assisted actions</li>
+              <li>Close unused tabs during heavier editing sessions</li>
+            </ul>
+
+            <h2>Account & Access</h2>
+            <p>
+              If you cannot access your account, retry from <a href="/signup">Sign Up</a> first. If the issue continues,
+              contact us and include the email address you used to register.
+            </p>
+
+            <h2>Data & Privacy</h2>
+            <p>
+              For details on how uploaded images and account information are handled, review our
+              <a href="/privacy">Privacy Policy</a>.
+            </p>
+
+            <h2>Still Need Help?</h2>
+            <p>
+              If you still need assistance, go to <a href="/contact">Contact</a> and include:
+            </p>
+            <ul>
+              <li>What you were trying to do</li>
+              <li>What happened instead</li>
+              <li>Your browser and device</li>
+              <li>Screenshots if available</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <footer class="landing-footer" aria-label="FotoShoot footer">
+        <div class="landing-footer-inner">
+          <div class="landing-footer-top">
+            <a class="landing-footer-logo-link" href="/landing" aria-label="FotoShoot Home">
+              <img src="/assets/fotoshoot-logo-white.png" alt="FotoShoot" class="landing-footer-logo" />
+            </a>
+            <nav class="landing-footer-links" aria-label="Footer">
+              <a href="/signup">Sign Up</a>
+              <a href="/pricing">Pricing</a>
+              <a href="/faqs">FAQs</a>
+              <a href="/help">Help</a>
+              <a href="/contact">Contact</a>
+              <a href="/privacy">Privacy</a>
+              <a href="/terms">Terms</a>
+            </nav>
+          </div>
+          <div class="landing-footer-bottom">
+            <p>© <span id="footerYear"></span> FotoShoot. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
+    </main>
+    <script>
+      (() => {
+        const nav = document.querySelector(".landing-nav");
+        if (!nav) return;
+
+        let lastScrollY = window.scrollY || 0;
+        const delta = 8;
+        const topRevealThreshold = 80;
+
+        const onScroll = () => {
+          const currentY = window.scrollY || 0;
+          const diff = currentY - lastScrollY;
+
+          if (currentY <= topRevealThreshold) {
+            nav.classList.remove("is-hidden");
+            lastScrollY = currentY;
+            return;
+          }
+
+          if (Math.abs(diff) < delta) return;
+
+          if (diff > 0) {
+            nav.classList.add("is-hidden");
+          } else {
+            nav.classList.remove("is-hidden");
+          }
+
+          lastScrollY = currentY;
+        };
+
+        window.addEventListener("scroll", onScroll, { passive: true });
+
+        const footerYear = document.getElementById("footerYear");
+        if (footerYear) {
+          footerYear.textContent = String(new Date().getFullYear());
+        }
+      })();
+    </script>
+  </body>
+</html>

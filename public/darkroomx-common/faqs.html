@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FAQs - FotoShoot</title>
+    <link rel="icon" type="image/png" href="/assets/Favicon.png" />
+    <link rel="stylesheet" href="/darkroomx-common/styles.css" />
+  </head>
+  <body class="common-page">
+    <main class="common-shell">
+      <header class="landing-nav">
+        <a class="landing-brand" href="/landing" aria-label="FotoShoot Home">
+          <img src="/assets/fotoshoot-logo-white.png" alt="FotoShoot" class="landing-brand-logo" />
+        </a>
+        <nav class="landing-nav-links" aria-label="Primary">
+          <a href="/pricing">Pricing</a>
+          <a class="landing-cta-link" href="/signup">Try for Free</a>
+        </nav>
+      </header>
+
+      <section class="common-blank-section" aria-label="FAQs page content">
+        <div class="common-page-inner">
+          <h1>FAQs</h1>
+          <div class="legal-content">
+            <h2>What is FotoShoot?</h2>
+            <p>
+              FotoShoot is an AI-powered product imagery workspace that helps you turn rough product photos into
+              polished studio, marketplace, editorial, and lifestyle-ready visuals.
+            </p>
+
+            <h2>What kind of images can I start with?</h2>
+            <p>
+              You can start with simple product photos, supplier images, phone photos, or existing product shots.
+              FotoShoot is designed to help clean them up and turn them into stronger marketing assets.
+            </p>
+
+            <h2>Do I need a full studio setup to use FotoShoot?</h2>
+            <p>
+              No. FotoShoot is built for people who want better product imagery without the time, cost, and complexity
+              of a full production workflow.
+            </p>
+
+            <h2>Can FotoShoot keep the product itself accurate?</h2>
+            <p>
+              Yes. FotoShoot is being shaped around product fidelity, which means the product should stay true while the
+              environment, lighting, surface, and presentation around it can change.
+            </p>
+
+            <h2>What can I create with FotoShoot?</h2>
+            <p>
+              You can create cleaner product images for ecommerce, launches, social content, ads, campaign visuals, and
+              other brand-ready use cases from a single source image.
+            </p>
+
+            <h2>Can I direct the style of the output?</h2>
+            <p>
+              Yes. FotoShoot supports preset-driven direction and prompt-based edits so you can guide the result instead
+              of relying on one generic output.
+            </p>
+
+            <h2>Can I use FotoShoot for ecommerce and marketplace listings?</h2>
+            <p>
+              Yes. FotoShoot is intended for storefront, marketplace, and marketing use cases where clean, believable,
+              commercially useful product visuals matter.
+            </p>
+
+            <h2>Can I use FotoShoot for client or commercial work?</h2>
+            <p>
+              Yes. FotoShoot is built for commercial imagery workflows, though final outputs should always be reviewed
+              before publishing or delivering to clients.
+            </p>
+
+            <h2>Do I need to install anything?</h2>
+            <p>
+              No. FotoShoot runs in the browser, so you can work directly online without installing a traditional desktop app.
+            </p>
+
+            <h2>Will my work disappear if I refresh the browser?</h2>
+            <p>
+              FotoShoot is being built to keep your active workspace available locally so you do not lose your session
+              when the page reloads.
+            </p>
+
+            <h2>How does pricing work?</h2>
+            <p>
+              Pricing is being finalized. For now, the best place to check for the latest plan details is the
+              <a href="/pricing">Pricing</a> page.
+            </p>
+
+            <h2>How do I create an account?</h2>
+            <p>
+              Go to <a href="/signup">Sign Up</a> and continue to create your account.
+            </p>
+
+            <h2>How do I get help?</h2>
+            <p>
+              Start with the <a href="/help">Help</a> page or reach out through <a href="/contact">Contact</a>.
+            </p>
+
+            <h2>How do you handle uploaded images and data?</h2>
+            <p>
+              Data handling and retention are explained in our <a href="/privacy">Privacy Policy</a>.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <footer class="landing-footer" aria-label="FotoShoot footer">
+        <div class="landing-footer-inner">
+          <div class="landing-footer-top">
+            <a class="landing-footer-logo-link" href="/landing" aria-label="FotoShoot Home">
+              <img src="/assets/fotoshoot-logo-white.png" alt="FotoShoot" class="landing-footer-logo" />
+            </a>
+            <nav class="landing-footer-links" aria-label="Footer">
+              <a href="/signup">Sign Up</a>
+              <a href="/pricing">Pricing</a>
+              <a href="/faqs">FAQs</a>
+              <a href="/help">Help</a>
+              <a href="/contact">Contact</a>
+              <a href="/privacy">Privacy</a>
+              <a href="/terms">Terms</a>
+            </nav>
+          </div>
+          <div class="landing-footer-bottom">
+            <p>© <span id="footerYear"></span> FotoShoot. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
+    </main>
+    <script>
+      (() => {
+        const nav = document.querySelector(".landing-nav");
+        if (!nav) return;
+
+        let lastScrollY = window.scrollY || 0;
+        const delta = 8;
+        const topRevealThreshold = 80;
+
+        const onScroll = () => {
+          const currentY = window.scrollY || 0;
+          const diff = currentY - lastScrollY;
+
+          if (currentY <= topRevealThreshold) {
+            nav.classList.remove("is-hidden");
+            lastScrollY = currentY;
+            return;
+          }
+
+          if (Math.abs(diff) < delta) return;
+
+          if (diff > 0) {
+            nav.classList.add("is-hidden");
+          } else {
+            nav.classList.remove("is-hidden");
+          }
+
+          lastScrollY = currentY;
+        };
+
+        window.addEventListener("scroll", onScroll, { passive: true });
+
+        const footerYear = document.getElementById("footerYear");
+        if (footerYear) {
+          footerYear.textContent = String(new Date().getFullYear());
+        }
+      })();
+    </script>
+  </body>
+</html>
