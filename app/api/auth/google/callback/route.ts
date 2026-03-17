@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { exchangeGoogleCode, fetchGoogleUser } from "@/lib/auth/google";
 import { setAuthSession, validateOAuthState } from "@/lib/auth/session";
 import { upsertUserFromGoogleProfile } from "@/lib/users";
+import { sendFotoShootSignupNotificationEmail, sendFotoShootWelcomeEmail } from "@/lib/email";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code") || "";
@@ -20,7 +21,24 @@ export async function GET(request: NextRequest) {
   try {
     const tokens = await exchangeGoogleCode(code);
     const user = await fetchGoogleUser(tokens.access_token);
-    await upsertUserFromGoogleProfile(user);
+    const syncResult = await upsertUserFromGoogleProfile(user);
+
+    if (syncResult.isNewUser) {
+      sendFotoShootWelcomeEmail({
+        request,
+        userEmail: user.email,
+        userName: user.name,
+      }).catch((error) => {
+        console.error("Welcome email failed:", error?.message || error);
+      });
+
+      sendFotoShootSignupNotificationEmail({
+        userEmail: user.email,
+        userName: user.name,
+      }).catch((error) => {
+        console.error("Signup notification email failed:", error?.message || error);
+      });
+    }
 
     await setAuthSession({
       sub: user.sub,

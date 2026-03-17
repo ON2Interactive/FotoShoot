@@ -61,7 +61,12 @@ export async function upsertUserFromGoogleProfile(profile: GoogleUser) {
       throw new Error(ledgerError.message);
     }
 
-    return insertedUser.id;
+    return {
+      userId: insertedUser.id,
+      isNewUser: true,
+      firstName,
+      lastName,
+    };
   }
 
   const { error: updateError } = await supabase
@@ -78,5 +83,10 @@ export async function upsertUserFromGoogleProfile(profile: GoogleUser) {
     throw new Error(updateError.message);
   }
 
-  return existingUser.id;
+  return {
+    userId: existingUser.id,
+    isNewUser: false,
+    firstName,
+    lastName,
+  };
 }
