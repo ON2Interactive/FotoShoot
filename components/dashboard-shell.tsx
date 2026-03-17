@@ -806,7 +806,11 @@ export default function DashboardShell({
 
       window.location.href = String(payload.checkoutUrl);
     } catch (error) {
-      setSettingsError(error instanceof Error ? error.message : "Unable to start checkout.");
+      const message = error instanceof Error ? error.message : "Unable to start checkout.";
+      setSettingsError(message);
+      if (typeof window !== "undefined") {
+        window.alert(message);
+      }
       setSettingsBusyAction(null);
     }
   }
@@ -825,7 +829,11 @@ export default function DashboardShell({
 
       window.location.href = String(payload.portalUrl);
     } catch (error) {
-      setSettingsError(error instanceof Error ? error.message : "Unable to open billing portal.");
+      const message = error instanceof Error ? error.message : "Unable to open billing portal.";
+      setSettingsError(message);
+      if (typeof window !== "undefined") {
+        window.alert(message);
+      }
       setSettingsBusyAction(null);
     }
   }
@@ -1171,7 +1179,6 @@ export default function DashboardShell({
               </section>
 
               <section className="workspace-settings-section">
-                <h2>Logout</h2>
                 <button className="workspace-settings-link workspace-settings-link-danger" type="button" disabled={settingsBusyAction !== null} onClick={() => void handleLogout()}>
                   Logout
                 </button>
