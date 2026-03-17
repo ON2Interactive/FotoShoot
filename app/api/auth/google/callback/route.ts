@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { exchangeGoogleCode, fetchGoogleUser } from "@/lib/auth/google";
 import { setAuthSession, validateOAuthState } from "@/lib/auth/session";
+import { upsertUserFromGoogleProfile } from "@/lib/users";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code") || "";
@@ -19,6 +20,7 @@ export async function GET(request: NextRequest) {
   try {
     const tokens = await exchangeGoogleCode(code);
     const user = await fetchGoogleUser(tokens.access_token);
+    await upsertUserFromGoogleProfile(user);
 
     await setAuthSession({
       sub: user.sub,
